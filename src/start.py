@@ -50,7 +50,7 @@ from driver import mqtt
 
 # dns is broken when too many requests hit :(
 from lib import dns
-#from lib import realtime
+from lib import realtime
 from lib import databuffer
 
 import config
@@ -181,6 +181,7 @@ class Frischluft:
 
     async def start(self):
 
+        self.realtime = realtime.Realtime()
 
         # Get the event loop
         loop = asyncio.get_event_loop()
@@ -219,6 +220,7 @@ class Frischluft:
 
         # Setup LEDs
         self.leds = led_driver.LedDriver()
+        self.leds.set_enabled(config.IS_LED_ON)
         self.leds.set_led(0, 0, 255)
         time.sleep(0.3)
         self.leds.set_led(255, 0, 0)
@@ -256,6 +258,7 @@ class Frischluft:
             if is_connected:
                 print("wifi: conntected to %s" % config.WIFI_SSID)
                 self.display.paint_text('OK', 60, 30)
+                self.realtime.start()
                 #print("sleeping 5 seconds ..waiting for wifi to sync")
                 #time.sleep(5)
             else:
@@ -331,6 +334,7 @@ class Frischluft:
 
         while True:
             try:
+                self.update_led_schedule()
 
                 # this block is for calibration after button long press
                 if self.button.longpressed:
@@ -339,6 +343,7 @@ class Frischluft:
                     calib_started = time.time()
                     #regenbogen fuer 20 minuten..
                     while time.time() < calib_started + ( 20*60 ):
+                        self.update_led_schedule()
                         self.leds.rainbowanimation()
 
                     self.sensor.calibrate()
@@ -455,6 +460,39 @@ class Frischluft:
                 print("Something weird happened in start.py around line 455")
                 print(e)
 
+    @staticmethod
+    def _minutes_after_midnight(value):
+        try:
+            hour, minute = value.split(':')
+            hour = int(hour)
+            minute = int(minute)
+            if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+                return None
+            return hour * 60 + minute
+        except Exception:
+            return None
+
+    def update_led_schedule(self):
+        enabled = config.IS_LED_ON
+
+        if enabled and config.IS_LED_NIGHT_SCHEDULE_ENABLED and self.realtime.active:
+            start = self._minutes_after_midnight(config.LED_NIGHT_START)
+            end = self._minutes_after_midnight(config.LED_NIGHT_END)
+            offset = config.LED_UTC_OFFSET_HOURS
+            if not isinstance(offset, int) or offset < -12 or offset > 14:
+                offset = 1
+
+            if start is not None and end is not None and start != end:
+                local_time = time.localtime(time.time() + offset * 60 * 60)
+                now = local_time[3] * 60 + local_time[4]
+                if start < end:
+                    is_night = start <= now < end
+                else:
+                    is_night = now >= start or now < end
+                if is_night:
+                    enabled = False
+
+        self.leds.set_enabled(enabled)
 
 
     def alert(self):
@@ -571,4 +609,3 @@ except KeyboardInterrupt:
 finally:
     if IS_UASYNCIO_V3:
         asyncio.new_event_loop()  # Clear retained state
-

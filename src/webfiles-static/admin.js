@@ -15,6 +15,11 @@ const inputAdminPassword = document.getElementById('inputAdminPassword');
 const inputThresholdWarning = document.getElementById('inputThresholdWarning');
 const inputThresholdAlert = document.getElementById('inputThresholdAlert');
 const cbSoundEnabled = document.getElementById('cbSoundEnabled');
+const cbLedEnabled = document.getElementById('cbLedEnabled');
+const cbLedNightScheduleEnabled = document.getElementById('cbLedNightScheduleEnabled');
+const inputLedNightStart = document.getElementById('inputLedNightStart');
+const inputLedNightEnd = document.getElementById('inputLedNightEnd');
+const inputLedUtcOffsetHours = document.getElementById('inputLedUtcOffsetHours');
 
 // Buttons
 const btnSave = document.getElementById('btnSave');
@@ -41,6 +46,11 @@ function getConfig() {
         inputThresholdWarning.value = data.thresholdWarningPpm;
         inputThresholdAlert.value = data.thresholdAlertPpm;
         cbSoundEnabled.checked = data.isSoundOn;
+        cbLedEnabled.checked = data.isLedOn;
+        cbLedNightScheduleEnabled.checked = data.isLedNightScheduleEnabled;
+        inputLedNightStart.value = data.ledNightStart;
+        inputLedNightEnd.value = data.ledNightEnd;
+        inputLedUtcOffsetHours.value = data.ledUtcOffsetHours;
 
         DIV_LOADING.style.display = 'none';
         DIV_CONFIG.style.display = 'block';
@@ -63,6 +73,11 @@ async function saveConfig() {
     'thresholdWarningPpm': parseInt(inputThresholdWarning.value, 10) || null,
     'thresholdAlertPpm': parseInt(inputThresholdAlert.value, 10) || null,
     'isSoundOn': cbSoundEnabled.checked,
+    'isLedOn': cbLedEnabled.checked,
+    'isLedNightScheduleEnabled': cbLedNightScheduleEnabled.checked,
+    'ledNightStart': inputLedNightStart.value,
+    'ledNightEnd': inputLedNightEnd.value,
+    'ledUtcOffsetHours': parseInt(inputLedUtcOffsetHours.value, 10),
   };
   const dataStr = JSON.stringify(config);
   console.log('save config:', config);

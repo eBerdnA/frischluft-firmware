@@ -5,6 +5,11 @@
     "wifiPassword": "",
     "adminPassword": "",
     "isSoundOn": true,
+    "isLedOn": true,
+    "isLedNightScheduleEnabled": false,
+    "ledNightStart": "22:00",
+    "ledNightEnd": "07:00",
+    "ledUtcOffsetHours": 1,
     "deviceName": "",
     "mqttServer": "broker.frischluft.works",
     "mqttPort": 1883,
@@ -15,4 +20,3 @@
     "isConfiguredByUser": false,
     "machineID": ""
 }
-
