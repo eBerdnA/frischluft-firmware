@@ -49,6 +49,10 @@ np = neopixel.NeoPixel(machine.Pin(neopixel_pin), neopixel_num)
 class LedDriver:
     def __init__(self):
         self.animation_running=0    
+        self.enabled = True
+        self.last_r = -1
+        self.last_g = -1
+        self.last_b = -1
 
         #RGB led attached on pins 
         self.led_r = machine.PWM(machine.Pin(r_pin), freq=500)
@@ -56,16 +60,15 @@ class LedDriver:
         self.led_b = machine.PWM(machine.Pin(b_pin), freq=500)
         self.off()
 
-        self.last_r=0
-        self.last_g=0
-        self.last_b=0
-
         self.alarmled = False
         
         self.wheelpos=0
 
 
     def set_led(self,r,g,b):
+
+            if not self.enabled:
+                return
 
             # leds did not change? return.
             if (r == self.last_r) and (g == self.last_g) and (b == self.last_b):
@@ -93,6 +96,18 @@ class LedDriver:
 #                print(i)
                 np[i] = (r,g,b)
             np.write()
+
+    def set_enabled(self, enabled):
+        if self.enabled == enabled:
+            return
+
+        self.enabled = enabled
+        if not enabled:
+            self.off()
+
+        self.last_r = -1
+        self.last_g = -1
+        self.last_b = -1
 
 
     def off(self):

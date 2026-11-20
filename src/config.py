@@ -34,8 +34,21 @@ CONFIG_TYPES = {
     "thresholdWarningPpm": int,
     "thresholdAlertPpm": int,
     "isSoundOn": bool,
+    "isLedOn": bool,
+    "isLedNightScheduleEnabled": bool,
+    "ledNightStart": str,
+    "ledNightEnd": str,
+    "ledUtcOffsetHours": int,
     "machineID": str,
     "softwareVersion": str,
+}
+
+LED_DEFAULT_CONFIG = {
+    "isLedOn": True,
+    "isLedNightScheduleEnabled": False,
+    "ledNightStart": "22:00",
+    "ledNightEnd": "07:00",
+    "ledUtcOffsetHours": 1,
 }
 
 
@@ -52,6 +65,14 @@ def load_config():
 
     try:
         config_content = json.loads(config_content_str)
+        config_was_updated = False
+        for key in LED_DEFAULT_CONFIG:
+            if key not in config_content:
+                config_content[key] = LED_DEFAULT_CONFIG[key]
+                config_was_updated = True
+        if config_was_updated:
+            with open(CONFIG_FILENAME, "w") as f:
+                f.write(json.dumps(config_content))
         return config_content
     except Exception as err:
         print('Error: could not load config.json')
@@ -70,7 +91,9 @@ def update_config_file(config_content):
     """
     Called with JSON payload from webserver. Make sure new config is valid and update config.json
     """
-    global IS_SOUND_ON, THRESHOLD_ALERT_PPM, THRESHOLD_WARNING_PPM, DEVICE_NAME, ADMIN_PASSWORD, IS_CONFIGURED_BY_USER
+    global IS_SOUND_ON, IS_LED_ON, IS_LED_NIGHT_SCHEDULE_ENABLED
+    global LED_NIGHT_START, LED_NIGHT_END, LED_UTC_OFFSET_HOURS
+    global THRESHOLD_ALERT_PPM, THRESHOLD_WARNING_PPM, DEVICE_NAME, ADMIN_PASSWORD, IS_CONFIGURED_BY_USER
 
     config_new = load_config()
     for key in config_content.keys():
@@ -86,6 +109,11 @@ def update_config_file(config_content):
 
             # Hot update current config, so we don't need to reboot
             if key == 'isSoundOn': IS_SOUND_ON = config_new[key]
+            if key == 'isLedOn': IS_LED_ON = config_new[key]
+            if key == 'isLedNightScheduleEnabled': IS_LED_NIGHT_SCHEDULE_ENABLED = config_new[key]
+            if key == 'ledNightStart': LED_NIGHT_START = config_new[key]
+            if key == 'ledNightEnd': LED_NIGHT_END = config_new[key]
+            if key == 'ledUtcOffsetHours': LED_UTC_OFFSET_HOURS = config_new[key]
             if key == 'thresholdWarningPpm': THRESHOLD_WARNING_PPM = config_new[key]
             if key == 'thresholdAlertPpm': THRESHOLD_ALERT_PPM = config_new[key]
             if key == 'adminPassword': ADMIN_PASSWORD = config_new[key]
@@ -107,6 +135,11 @@ WIFI_SSID = config_content["wifiSsid"]
 WIFI_PASSWORD = config_content["wifiPassword"]
 ADMIN_PASSWORD = config_content["adminPassword"]
 IS_SOUND_ON = config_content["isSoundOn"]
+IS_LED_ON = config_content["isLedOn"]
+IS_LED_NIGHT_SCHEDULE_ENABLED = config_content["isLedNightScheduleEnabled"]
+LED_NIGHT_START = config_content["ledNightStart"]
+LED_NIGHT_END = config_content["ledNightEnd"]
+LED_UTC_OFFSET_HOURS = config_content["ledUtcOffsetHours"]
 MQTT_SERVER = config_content["mqttServer"]
 MQTT_PORT = config_content["mqttPort"]
 MQTT_USERNAME = config_content["mqttUsername"] or None
@@ -137,5 +170,4 @@ if(u[4].find("spiram") != -1):
     HARDWARE_CONFIGURATION = 2
 else:    
     print("ESP32-WROOM-DEVBOARD DETECTED")
-
 
